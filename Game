@@ -1,0 +1,816 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Arcade Simples</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap');
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #1a1a2e;
+            color: #e0e0e0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            text-align: center;
+            padding: 1rem;
+            box-sizing: border-box;
+            margin: 0;
+            width: 100%;
+            height: 100vh;
+            overflow: hidden;
+        }
+        .container {
+            background-color: #2a2a44;
+            padding: 1.5rem;
+            border-radius: 1rem;
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.4);
+            width: 95%;
+            max-width: 800px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            overflow-y: auto;
+        }
+        h1 {
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            color: #e94560;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+        }
+        .game-selection {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 1.5rem;
+            margin-top: 1.5rem;
+        }
+        .game-card {
+            background-color: #4a4a6a;
+            padding: 1rem;
+            border-radius: 1rem;
+            cursor: pointer;
+            transition: transform 0.3s, box-shadow 0.3s;
+            text-align: center;
+            width: 120px;
+        }
+        .game-card:hover {
+            transform: translateY(-8px) scale(1.05);
+            box-shadow: 0 12px 24px rgba(0, 0, 0, 0.6);
+        }
+        .game-card img {
+            width: 60px;
+            height: 60px;
+            object-fit: contain;
+            margin-bottom: 0.5rem;
+            filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.3));
+        }
+        .game-card h2 {
+            font-size: 1rem;
+            font-weight: 700;
+            color: #d8d8f8;
+        }
+        .game-container {
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            height: 100vh;
+        }
+        canvas {
+            background-color: #0d0d1a;
+            border: 2px solid #555;
+            border-radius: 0.5rem;
+            margin: 1rem 0;
+            box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.5);
+            max-width: 100%;
+        }
+        .controls {
+            display: grid;
+            grid-template-areas: ". up ." "left down right";
+            gap: 1rem;
+            margin: 1rem 0;
+        }
+        .control-button {
+            background-color: #e94560;
+            color: white;
+            padding: 1rem 1.5rem;
+            font-size: 1.25rem;
+            border-radius: 0.5rem;
+            cursor: pointer;
+            user-select: none;
+            transition: background-color 0.3s;
+            border: none;
+        }
+        .control-button:active {
+            background-color: #c9344f;
+        }
+        #up-button { grid-area: up; }
+        #down-button { grid-area: down; }
+        #left-button { grid-area: left; }
+        #right-button { grid-area: right; }
+        .back-button {
+            margin-top: 1rem;
+            padding: 0.5rem 1rem;
+            background-color: #3f51b5;
+            color: white;
+            border: none;
+            border-radius: 0.5rem;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        .back-button:hover {
+            background-color: #303f9f;
+        }
+        #message-box {
+            background-color: #e94560;
+            color: white;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 100;
+            display: none;
+            animation: fadeIn 0.5s ease-in-out;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+    </style>
+</head>
+<body>
+
+    <div id="game-selection-screen" class="container">
+        <h1>Arcade Simples</h1>
+        <p class="text-gray-400">Escolhe um jogo para jogar:</p>
+        <div class="game-selection">
+            <div class="game-card" onclick="startGame('tetris')">
+                <img src="https://placehold.co/100x100/4a4a6a/ffffff?text=T" alt="Tetris">
+                <h2>Tetris</h2>
+            </div>
+            <div class="game-card" onclick="startGame('car')">
+                <img src="https://placehold.co/100x100/4a4a6a/ffffff?text=C" alt="Jogo do Carro">
+                <h2>Jogo do Carro</h2>
+            </div>
+            <div class="game-card" onclick="startGame('frogger')">
+                <img src="https://placehold.co/100x100/4a4a6a/ffffff?text=F" alt="Frogger">
+                <h2>Frogger</h2>
+            </div>
+        </div>
+    </div>
+
+    <div id="game-screen" class="game-container">
+        <canvas id="gameCanvas"></canvas>
+        <div class="controls">
+            <button id="up-button" class="control-button">▲</button>
+            <button id="left-button" class="control-button">◀</button>
+            <button id="down-button" class="control-button">▼</button>
+            <button id="right-button" class="control-button">▶</button>
+        </div>
+        <button id="back-button" class="back-button">Voltar</button>
+    </div>
+
+    <div id="message-box"></div>
+
+    <script>
+        const gameSelectionScreen = document.getElementById('game-selection-screen');
+        const gameScreen = document.getElementById('game-screen');
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        const backButton = document.getElementById('back-button');
+        const upButton = document.getElementById('up-button');
+        const downButton = document.getElementById('down-button');
+        const leftButton = document.getElementById('left-button');
+        const rightButton = document.getElementById('right-button');
+        const messageBox = document.getElementById('message-box');
+
+        let currentGame = null;
+
+        function showMessage(message, duration = 2000) {
+            messageBox.textContent = message;
+            messageBox.style.display = 'block';
+            setTimeout(() => {
+                messageBox.style.display = 'none';
+            }, duration);
+        }
+
+        backButton.addEventListener('click', () => {
+            if (currentGame) {
+                currentGame.stop();
+            }
+            gameScreen.style.display = 'none';
+            gameSelectionScreen.style.display = 'flex';
+        });
+
+        function resizeCanvas() {
+            const controlsHeight = document.querySelector('.controls').offsetHeight;
+            const backButtonHeight = document.getElementById('back-button').offsetHeight;
+            const padding = 20;
+            const availableHeight = window.innerHeight - controlsHeight - backButtonHeight - (padding * 2);
+            
+            let newWidth, newHeight;
+            const aspectRatio = currentGame.aspectRatio || 3 / 5;
+
+            if (window.innerWidth / availableHeight > aspectRatio) {
+                newHeight = availableHeight;
+                newWidth = availableHeight * aspectRatio;
+            } else {
+                newWidth = window.innerWidth - padding;
+                newHeight = newWidth / aspectRatio;
+            }
+
+            canvas.width = Math.min(newWidth, currentGame.maxWidth || 800);
+            canvas.height = Math.min(newHeight, currentGame.maxHeight || 800 * aspectRatio);
+
+            if (currentGame) {
+                currentGame.init();
+                currentGame.draw();
+            }
+        }
+
+        function startGame(gameName) {
+            gameSelectionScreen.style.display = 'none';
+            gameScreen.style.display = 'flex';
+            
+            if (currentGame) {
+                currentGame.stop();
+            }
+
+            switch (gameName) {
+                case 'tetris':
+                    currentGame = new Tetris(canvas, ctx);
+                    currentGame.aspectRatio = 10 / 20;
+                    currentGame.maxWidth = 300;
+                    currentGame.maxHeight = 600;
+                    break;
+                case 'car':
+                    currentGame = new CarGame(canvas, ctx);
+                    currentGame.aspectRatio = 4 / 6;
+                    currentGame.maxWidth = 400;
+                    currentGame.maxHeight = 600;
+                    break;
+                case 'frogger':
+                    currentGame = new Frogger(canvas, ctx);
+                    currentGame.aspectRatio = 4 / 6;
+                    currentGame.maxWidth = 400;
+                    currentGame.maxHeight = 600;
+                    break;
+            }
+            resizeCanvas();
+            currentGame.start();
+        }
+
+        window.addEventListener('resize', () => {
+            if (currentGame) {
+                resizeCanvas();
+            }
+        });
+        
+        upButton.addEventListener('click', () => {
+            if (currentGame && currentGame.handleInput) {
+                currentGame.handleInput('up');
+            }
+        });
+        downButton.addEventListener('click', () => {
+            if (currentGame && currentGame.handleInput) {
+                currentGame.handleInput('down');
+            }
+        });
+        leftButton.addEventListener('click', () => {
+            if (currentGame && currentGame.handleInput) {
+                currentGame.handleInput('left');
+            }
+        });
+        rightButton.addEventListener('click', () => {
+            if (currentGame && currentGame.handleInput) {
+                currentGame.handleInput('right');
+            }
+        });
+
+        class Tetris {
+            constructor(canvas, ctx) {
+                this.canvas = canvas;
+                this.ctx = ctx;
+                this.grid = [];
+                this.cols = 10;
+                this.rows = 20;
+                this.blockSize = 0;
+                this.currentPiece = null;
+                this.nextPiece = null;
+                this.gameLoop = null;
+                this.score = 0;
+            }
+
+            init() {
+                this.blockSize = this.canvas.width / this.cols;
+                this.grid = Array.from({ length: this.rows }, () => Array(this.cols).fill(0));
+                this.score = 0;
+                this.generateNewPiece();
+                this.generateNextPiece();
+            }
+
+            draw() {
+                this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+                this.drawGrid();
+                if (this.currentPiece) {
+                    this.drawPiece(this.currentPiece);
+                }
+                this.drawScore();
+            }
+
+            drawGrid() {
+                for (let r = 0; r < this.rows; r++) {
+                    for (let c = 0; c < this.cols; c++) {
+                        if (this.grid[r][c] !== 0) {
+                            this.ctx.fillStyle = this.getColor(this.grid[r][c]);
+                            this.ctx.fillRect(c * this.blockSize, r * this.blockSize, this.blockSize, this.blockSize);
+                            this.ctx.strokeStyle = '#2a2a44';
+                            this.ctx.strokeRect(c * this.blockSize, r * this.blockSize, this.blockSize, this.blockSize);
+                        }
+                    }
+                }
+            }
+            
+            drawPiece(piece) {
+                this.ctx.fillStyle = this.getColor(piece.type);
+                piece.shape.forEach((row, r) => {
+                    row.forEach((value, c) => {
+                        if (value === 1) {
+                            this.ctx.fillRect((piece.x + c) * this.blockSize, (piece.y + r) * this.blockSize, this.blockSize, this.blockSize);
+                            this.ctx.strokeStyle = '#2a2a44';
+                            this.ctx.strokeRect((piece.x + c) * this.blockSize, (piece.y + r) * this.blockSize, this.blockSize, this.blockSize);
+                        }
+                    });
+                });
+            }
+
+            drawScore() {
+                this.ctx.fillStyle = '#e0e0e0';
+                this.ctx.font = '20px Inter';
+                this.ctx.textAlign = 'center';
+                this.ctx.fillText(`Pontuação: ${this.score}`, this.canvas.width / 2, 25);
+            }
+
+            getColor(type) {
+                switch (type) {
+                    case 1: return '#00f0f0';
+                    case 2: return '#0000f0';
+                    case 3: return '#f0a000';
+                    case 4: return '#f0f000';
+                    case 5: return '#00f000';
+                    case 6: return '#a000f0';
+                    case 7: return '#f00000';
+                    default: return '#e0e0e0';
+                }
+            }
+
+            getPieces() {
+                return [
+                    { type: 1, shape: [[0,0,0,0],[1,1,1,1],[0,0,0,0],[0,0,0,0]] },
+                    { type: 2, shape: [[1,0,0],[1,1,1],[0,0,0]] },
+                    { type: 3, shape: [[0,0,1],[1,1,1],[0,0,0]] },
+                    { type: 4, shape: [[1,1],[1,1]] },
+                    { type: 5, shape: [[0,1,1],[1,1,0],[0,0,0]] },
+                    { type: 6, shape: [[0,1,0],[1,1,1],[0,0,0]] },
+                    { type: 7, shape: [[1,1,0],[0,1,1],[0,0,0]] }
+                ];
+            }
+
+            generateNewPiece() {
+                const pieces = this.getPieces();
+                const newPiece = pieces[Math.floor(Math.random() * pieces.length)];
+                this.currentPiece = {
+                    ...newPiece,
+                    x: Math.floor(this.cols / 2) - Math.floor(newPiece.shape[0].length / 2),
+                    y: 0
+                };
+                if (!this.isValidMove(this.currentPiece)) {
+                    this.stop();
+                    showMessage('Fim de Jogo! Pontuação: ' + this.score);
+                }
+            }
+
+            generateNextPiece() {
+                const pieces = this.getPieces();
+                this.nextPiece = pieces[Math.floor(Math.random() * pieces.length)];
+            }
+
+            isValidMove(piece) {
+                for (let r = 0; r < piece.shape.length; r++) {
+                    for (let c = 0; c < piece.shape[r].length; c++) {
+                        if (piece.shape[r][c] === 1) {
+                            const newX = piece.x + c;
+                            const newY = piece.y + r;
+                            if (newX < 0 || newX >= this.cols || newY >= this.rows || (newY >= 0 && this.grid[newY][newX] !== 0)) {
+                                return false;
+                            }
+                        }
+                    }
+                }
+                return true;
+            }
+
+            lockPiece() {
+                this.currentPiece.shape.forEach((row, r) => {
+                    row.forEach((value, c) => {
+                        if (value === 1) {
+                            this.grid[this.currentPiece.y + r][this.currentPiece.x + c] = this.currentPiece.type;
+                        }
+                    });
+                });
+                this.clearLines();
+                this.currentPiece = this.nextPiece;
+                this.currentPiece.x = Math.floor(this.cols / 2) - Math.floor(this.currentPiece.shape[0].length / 2);
+                this.currentPiece.y = 0;
+                this.generateNextPiece();
+                if (!this.isValidMove(this.currentPiece)) {
+                    this.stop();
+                    showMessage('Fim de Jogo! Pontuação: ' + this.score);
+                }
+            }
+
+            clearLines() {
+                let linesCleared = 0;
+                for (let r = this.rows - 1; r >= 0; r--) {
+                    if (this.grid[r].every(cell => cell !== 0)) {
+                        this.grid.splice(r, 1);
+                        this.grid.unshift(Array(this.cols).fill(0));
+                        linesCleared++;
+                        r++;
+                    }
+                }
+                if (linesCleared > 0) {
+                    this.score += linesCleared * 100;
+                }
+            }
+
+            move(dx, dy) {
+                const newPiece = { ...this.currentPiece, x: this.currentPiece.x + dx, y: this.currentPiece.y + dy };
+                if (this.isValidMove(newPiece)) {
+                    this.currentPiece = newPiece;
+                } else if (dy === 1) {
+                    this.lockPiece();
+                }
+                this.draw();
+            }
+
+            rotate() {
+                const shape = this.currentPiece.shape;
+                const newShape = shape[0].map((_, colIndex) => shape.map(row => row[colIndex]).reverse());
+                const rotatedPiece = { ...this.currentPiece, shape: newShape };
+                if (this.isValidMove(rotatedPiece)) {
+                    this.currentPiece = rotatedPiece;
+                }
+                this.draw();
+            }
+            
+            start() {
+                this.gameLoop = setInterval(() => this.move(0, 1), 1000);
+                window.addEventListener('keydown', this.handleKeyDown);
+                this.draw();
+            }
+
+            stop() {
+                if (this.gameLoop) {
+                    clearInterval(this.gameLoop);
+                    this.gameLoop = null;
+                }
+                window.removeEventListener('keydown', this.handleKeyDown);
+            }
+            
+            handleKeyDown = (event) => {
+                if (!this.currentPiece) return;
+                switch (event.key) {
+                    case 'ArrowLeft':
+                        this.move(-1, 0);
+                        break;
+                    case 'ArrowRight':
+                        this.move(1, 0);
+                        break;
+                    case 'ArrowDown':
+                        this.move(0, 1);
+                        break;
+                    case 'ArrowUp':
+                        this.rotate();
+                        break;
+                }
+            }
+
+            handleInput(direction) {
+                if (!this.currentPiece) return;
+                switch (direction) {
+                    case 'left':
+                        this.move(-1, 0);
+                        break;
+                    case 'right':
+                        this.move(1, 0);
+                        break;
+                    case 'down':
+                        this.move(0, 1);
+                        break;
+                    case 'up':
+                        this.rotate();
+                        break;
+                }
+            }
+        }
+
+        class CarGame {
+            constructor(canvas, ctx) {
+                this.canvas = canvas;
+                this.ctx = ctx;
+                this.car = {};
+                this.obstacles = [];
+                this.score = 0;
+                this.speed = 0;
+                this.gameLoop = null;
+                this.isGameOver = false;
+            }
+
+            init() {
+                this.obstacles = [];
+                this.score = 0;
+                this.speed = this.canvas.height * 0.01;
+                this.car = { x: this.canvas.width / 2 - (this.canvas.width * 0.1 / 2), y: this.canvas.height * 0.9, width: this.canvas.width * 0.1, height: this.canvas.height * 0.1 };
+                this.isGameOver = false;
+            }
+
+            draw() {
+                this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+                this.drawRoad();
+                this.drawCar();
+                this.drawObstacles();
+                this.drawScore();
+            }
+
+            drawRoad() {
+                this.ctx.fillStyle = '#444';
+                this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+                this.ctx.fillStyle = 'yellow';
+                for (let i = 0; i < this.canvas.height; i += this.canvas.height * 0.08) {
+                    this.ctx.fillRect(this.canvas.width / 2 - 5, i, 10, this.canvas.height * 0.04);
+                }
+            }
+
+            drawCar() {
+                this.ctx.fillStyle = 'blue';
+                this.ctx.fillRect(this.car.x, this.car.y, this.car.width, this.car.height);
+            }
+
+            drawObstacles() {
+                this.ctx.fillStyle = 'red';
+                this.obstacles.forEach(obs => {
+                    this.ctx.fillRect(obs.x, obs.y, obs.width, obs.height);
+                });
+            }
+            
+            drawScore() {
+                this.ctx.fillStyle = '#e0e0e0';
+                this.ctx.font = '20px Inter';
+                this.ctx.textAlign = 'center';
+                this.ctx.fillText(`Pontuação: ${this.score}`, this.canvas.width / 2, 25);
+            }
+
+            update() {
+                if (this.isGameOver) return;
+                
+                this.obstacles.forEach(obs => obs.y += this.speed);
+                
+                if (Math.random() < 0.02) {
+                    const obstacleWidth = this.canvas.width * (0.05 + Math.random() * 0.1);
+                    const obstacleX = Math.random() * (this.canvas.width - obstacleWidth);
+                    this.obstacles.push({ x: obstacleX, y: -this.canvas.height * 0.1, width: obstacleWidth, height: this.canvas.height * 0.1 });
+                }
+
+                this.obstacles = this.obstacles.filter(obs => obs.y < this.canvas.height);
+                
+                this.checkCollision();
+                this.score += 1;
+                this.draw();
+            }
+
+            checkCollision() {
+                this.obstacles.forEach(obs => {
+                    if (this.car.x < obs.x + obs.width &&
+                        this.car.x + this.car.width > obs.x &&
+                        this.car.y < obs.y + obs.height &&
+                        this.car.y + this.car.height > obs.y) {
+                        this.isGameOver = true;
+                        this.stop();
+                        showMessage('Fim de Jogo! Pontuação: ' + this.score);
+                    }
+                });
+            }
+
+            handleKeyDown = (event) => {
+                if (this.isGameOver) return;
+                const moveSpeed = this.canvas.width * 0.05;
+                if (event.key === 'ArrowLeft' && this.car.x > 0) {
+                    this.car.x -= moveSpeed;
+                } else if (event.key === 'ArrowRight' && this.car.x + this.car.width < this.canvas.width) {
+                    this.car.x += moveSpeed;
+                }
+            }
+
+            handleInput(direction) {
+                if (this.isGameOver) return;
+                const moveSpeed = this.canvas.width * 0.05;
+                if (direction === 'left' && this.car.x > 0) {
+                    this.car.x -= moveSpeed;
+                } else if (direction === 'right' && this.car.x + this.car.width < this.canvas.width) {
+                    this.car.x += moveSpeed;
+                }
+            }
+
+            start() {
+                this.gameLoop = setInterval(() => this.update(), 1000 / 60);
+                window.addEventListener('keydown', this.handleKeyDown);
+                this.draw();
+            }
+
+            stop() {
+                if (this.gameLoop) {
+                    clearInterval(this.gameLoop);
+                    this.gameLoop = null;
+                }
+                window.removeEventListener('keydown', this.handleKeyDown);
+            }
+        }
+
+        class Frogger {
+            constructor(canvas, ctx) {
+                this.canvas = canvas;
+                this.ctx = ctx;
+                this.frog = {};
+                this.obstacles = [];
+                this.score = 0;
+                this.gameLoop = null;
+                this.isGameOver = false;
+            }
+
+            init() {
+                this.frog = { x: this.canvas.width / 2, y: this.canvas.height - (this.canvas.height * 0.05), size: this.canvas.width * 0.05 };
+                this.obstacles = [];
+                this.score = 0;
+                this.isGameOver = false;
+                this.generateObstacles();
+            }
+            
+            draw() {
+                this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+                this.drawRoadAndRiver();
+                this.drawFrog();
+                this.drawObstacles();
+                this.drawScore();
+            }
+
+            drawRoadAndRiver() {
+                this.ctx.fillStyle = '#555';
+                this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height / 2);
+                this.ctx.fillStyle = '#0077b6';
+                this.ctx.fillRect(0, this.canvas.height / 2, this.canvas.width, this.canvas.height / 2 - (this.canvas.height * 0.05));
+                this.ctx.fillStyle = '#333';
+                this.ctx.fillRect(0, this.canvas.height - (this.canvas.height * 0.05), this.canvas.width, this.canvas.height * 0.05);
+                this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height * 0.05);
+            }
+
+            drawFrog() {
+                this.ctx.fillStyle = 'green';
+                this.ctx.fillRect(this.frog.x - this.frog.size / 2, this.frog.y - this.frog.size / 2, this.frog.size, this.frog.size);
+            }
+
+            drawObstacles() {
+                this.ctx.fillStyle = 'brown';
+                this.obstacles.forEach(obs => {
+                    this.ctx.fillRect(obs.x, obs.y, obs.width, obs.height);
+                });
+            }
+            
+            drawScore() {
+                this.ctx.fillStyle = '#e0e0e0';
+                this.ctx.font = '20px Inter';
+                this.ctx.textAlign = 'center';
+                this.ctx.fillText(`Pontuação: ${this.score}`, this.canvas.width / 2, 25);
+            }
+
+            generateObstacles() {
+                const laneCount = 5;
+                const laneHeight = (this.canvas.height / 2 - (this.canvas.height * 0.1)) / laneCount;
+                const speeds = [-1, 1.5, -2, 1, -1.5];
+                for (let i = 0; i < laneCount; i++) {
+                    const speed = speeds[i] * (this.canvas.width / 400);
+                    const y = this.canvas.height * 0.05 + (i * laneHeight);
+                    for (let j = 0; j < 3; j++) {
+                        const width = this.canvas.width * (0.1 + Math.random() * 0.1);
+                        const x = Math.random() * (this.canvas.width - width);
+                        this.obstacles.push({ x: x, y: y, width: width, height: laneHeight, speed: speed });
+                    }
+                }
+            }
+
+            update() {
+                if (this.isGameOver) return;
+                
+                this.obstacles.forEach(obs => {
+                    obs.x += obs.speed;
+                    if (obs.speed > 0 && obs.x > this.canvas.width) {
+                        obs.x = -obs.width;
+                    } else if (obs.speed < 0 && obs.x + obs.width < 0) {
+                        obs.x = this.canvas.width;
+                    }
+                });
+                
+                this.checkCollision();
+                this.checkWin();
+                this.draw();
+            }
+
+            checkCollision() {
+                this.obstacles.forEach(obs => {
+                    if (this.frog.x > obs.x &&
+                        this.frog.x < obs.x + obs.width &&
+                        this.frog.y > obs.y &&
+                        this.frog.y < obs.y + obs.height) {
+                        this.isGameOver = true;
+                        this.stop();
+                        showMessage('Fim de Jogo! Pontuação: ' + this.score);
+                    }
+                });
+            }
+
+            checkWin() {
+                if (this.frog.y <= this.canvas.height * 0.05) {
+                    this.score += 100;
+                    this.init();
+                    showMessage('Vitória! A tua pontuação aumentou.');
+                }
+            }
+
+            handleKeyDown = (event) => {
+                if (this.isGameOver) return;
+                const jumpDistance = this.canvas.height * 0.05;
+                const moveDistance = this.canvas.width * 0.05;
+                switch (event.key) {
+                    case 'ArrowUp':
+                        this.frog.y -= jumpDistance;
+                        break;
+                    case 'ArrowDown':
+                        this.frog.y += jumpDistance;
+                        break;
+                    case 'ArrowLeft':
+                        this.frog.x -= moveDistance;
+                        break;
+                    case 'ArrowRight':
+                        this.frog.x += moveDistance;
+                        break;
+                }
+            }
+            
+            handleInput(direction) {
+                if (this.isGameOver) return;
+                const jumpDistance = this.canvas.height * 0.05;
+                const moveDistance = this.canvas.width * 0.05;
+                switch (direction) {
+                    case 'up':
+                        this.frog.y -= jumpDistance;
+                        break;
+                    case 'down':
+                        this.frog.y += jumpDistance;
+                        break;
+                    case 'left':
+                        this.frog.x -= moveDistance;
+                        break;
+                    case 'right':
+                        this.frog.x += moveDistance;
+                        break;
+                }
+            }
+
+            start() {
+                this.gameLoop = setInterval(() => this.update(), 1000 / 60);
+                window.addEventListener('keydown', this.handleKeyDown);
+                this.draw();
+            }
+
+            stop() {
+                if (this.gameLoop) {
+                    clearInterval(this.gameLoop);
+                    this.gameLoop = null;
+                }
+                window.removeEventListener('keydown', this.handleKeyDown);
+            }
+        }
+    </script>
+
+</body>
+</html>
+
